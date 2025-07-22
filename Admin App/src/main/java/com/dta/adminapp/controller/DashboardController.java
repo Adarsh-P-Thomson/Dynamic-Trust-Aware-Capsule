@@ -1,23 +1,77 @@
 /*
 ================================================================================
 File: src/main/java/com/dta/adminapp/controllers/DashboardController.java
-Description: Placeholder controller for the main dashboard view after login.
+Description: Controller for the main dashboard view after login. (UPDATED)
 ================================================================================
 */
 package com.dta.adminapp.controllers;
 
+import com.dta.adminapp.models.Capsule;
+import com.dta.adminapp.services.CapsuleService;
 import com.dta.adminapp.services.SceneManager;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class DashboardController {
 
+    @FXML
+    private TableView<Capsule> capsuleTable;
+    @FXML
+    private TableColumn<Capsule, String> nameColumn;
+    @FXML
+    private TableColumn<Capsule, String> statusColumn;
+    @FXML
+    private TableColumn<Capsule, String> lifecycleColumn;
+    @FXML
+    private TableColumn<Capsule, String> createdColumn;
+
     private String authToken;
     private SceneManager sceneManager;
+    private final CapsuleService capsuleService = new CapsuleService();
+    private final ObservableList<Capsule> capsuleList = FXCollections.observableArrayList();
 
-    // This method will be called by the SceneManager after a successful login
     public void initialize(String token, SceneManager manager) {
         this.authToken = token;
         this.sceneManager = manager;
-        System.out.println("Dashboard loaded with token: " + authToken);
-        // Next step: Use this token to fetch capsule data from the server.
+
+        setupTableColumns();
+        loadCapsules();
+    }
+
+    private void setupTableColumns() {
+        nameColumn.setCellValueFactory(cellData -> cellData.getValue().capsuleNameProperty());
+        statusColumn.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
+        lifecycleColumn.setCellValueFactory(cellData -> cellData.getValue().lifecycleStatusProperty());
+
+        // Format the ZonedDateTime for display
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        createdColumn.setCellValueFactory(cellData -> {
+            ZonedDateTime zdt = cellData.getValue().createdAtProperty().get();
+            return new javafx.beans.property.SimpleStringProperty(zdt != null ? formatter.format(zdt) : "N/A");
+        });
+
+        capsuleTable.setItems(capsuleList);
+    }
+
+    private void loadCapsules() {
+        new Thread(() -> {
+            try {
+                List<Capsule> capsules = capsuleService.getAllCapsules(authToken);
+                Platform.runLater(() -> {
+                    capsuleList.setAll(capsules);
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                // In a real app, show an alert to the user
+            }
+        }).start();
     }
 }

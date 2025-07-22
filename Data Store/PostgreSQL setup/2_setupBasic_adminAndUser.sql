@@ -22,7 +22,7 @@ SET search_path TO dta_capsule;
 -- Password:   adminpass123
 --
 INSERT INTO admins (username, email, password_hash) VALUES
-('main_admin', 'admin@dtacapsule.com', '$2a$10$EizU3mN5jZ3k.L6v.Q9.A.T5mYwZz.L9x.W8c.V7k.B6b.E9g.F4i');
+('main_admin', 'admin@dtacapsule.com', '$2b$10$9jxY2l2fMF2R1AVeCLR./OOzs6ibOzOA.HJuWn0QF5CPa9O6pIkNO');
 
 
 --
