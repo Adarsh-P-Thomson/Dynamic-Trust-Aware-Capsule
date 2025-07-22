@@ -1,0 +1,20 @@
+{
+  "name": "control-server",
+  "version": "1.0.0",
+  "description": "Server between apps ad Database",
+  "license": "ISC",
+  "author": "Adarsh P Thomson",
+  "type": "commonjs",
+  "main": "server.js",
+  
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.17.0",
+    "pg": "^8.16.3",
+    "uuid": "^11.1.0"
+  }
+}
