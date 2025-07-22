@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns:fx="[http://javafx.com/fxml](http://javafx.com/fxml)"
+      xmlns="[http://javafx.com/javafx/17](http://javafx.com/javafx/17)"
+      fx:controller="com.dta.adminapp.controllers.LoginController" style="-fx-background-color: #f4f4f4;">
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+    </padding>
+
+    <Label text="DTA Admin Login" textFill="#333333">
+        <font>
+            <Font name="System Bold" size="24.0"/>
+        </font>
+    </Label>
+
+    <TextField fx:id="emailField" promptText="Email" style="-fx-border-radius: 5; -fx-background-radius: 5;"/>
+    <PasswordField fx:id="passwordField" promptText="Password" style="-fx-border-radius: 5; -fx-background-radius: 5;"/>
+
+    <Button onAction="#handleLoginButtonAction" text="Login"
+            style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;"/>
+
+    <Label fx:id="errorLabel" textFill="RED"/>
+</VBox>
