@@ -21,11 +21,10 @@ const generateToken = (id, username, role) => {
     });
 };
 
-// --- Admin Login with Enhanced Logging ---
+// --- Admin Login with Hash Debugging ---
 router.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
-    console.log(`[AUTH-DEBUG] Admin login attempt for email: ${email}`);
-
+    
     if (!email || !password) {
         return res.status(400).json({ message: "Email and password are required." });
     }
@@ -34,51 +33,67 @@ router.post('/admin/login', async (req, res) => {
         const { rows } = await pgPool.query('SELECT * FROM dta_capsule.admins WHERE email = $1', [email]);
 
         if (rows.length === 0) {
-            console.log(`[AUTH-DEBUG] Failure: No admin found with email: ${email}`);
             return res.status(401).json({ message: "Invalid admin credentials" });
         }
 
         const admin = rows[0];
-        console.log(`[AUTH-DEBUG] Admin found: ${admin.username}. Comparing password...`);
         
-        //console.log(`[AUTH-DEBUG] Stored hash: ${password}`);
-
+        // --- HASH DEBUGGING LOGS ---
+        console.log(`[AUTH-DEBUG] HASH FROM DB:   ${admin.password_hash}`);
+        const newHashForDebug = await bcrypt.hash(password, 10); // Use 10 rounds, matching the seed script
+        console.log(`[AUTH-DEBUG] HASH FROM REQ:  ${newHashForDebug}`);
+        // --- END DEBUGGING ---
 
         const isMatch = await bcrypt.compare(password, admin.password_hash);
-             //console.log(`[AUTH-DEBUG] Stored hash: ${admin.password_hash}`);
-        //console.log(`[AUTH-DEBUG] Provided password (hashed for comparison): ${bcrypt.hashSync(password, 10)}`); // This is for debugging only, never store or log plain passwords
-        
-
-
 
         if (isMatch) {
-            console.log(`[AUTH-DEBUG] Success: Password matched for ${admin.username}.`);
             const token = generateToken(admin.admin_id, admin.username, 'admin');
             res.json({ message: "Admin login successful", token });
         } else {
-            console.log(`[AUTH-DEBUG] Failure: Password does not match for ${admin.username}.`);
             res.status(401).json({ message: "Invalid admin credentials" });
         }
     } catch (error) {
-        console.error('[AUTH-DEBUG] CRITICAL: Error during admin login process:', error);
+        console.error('[AUTH-CRITICAL] Error during admin login process:', error);
         res.status(500).json({ message: "Server error during login" });
     }
 });
 
 
-// --- Client Login ---
+// --- Client Login with Hash Debugging ---
 router.post('/client/login', async (req, res) => {
     const { email, password } = req.body;
-    // This route would have similar logging in a full implementation
-    const { rows } = await pgPool.query('SELECT * FROM dta_capsule.clients WHERE email = $1', [email]);
-    if (rows.length > 0 && await bcrypt.compare(password, rows[0].password_hash)) {
+
+    if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    try {
+        const { rows } = await pgPool.query('SELECT * FROM dta_capsule.clients WHERE email = $1', [email]);
+        
+        if (rows.length === 0) {
+            return res.status(401).json({ message: "Invalid client credentials" });
+        }
+        
         const client = rows[0];
-        const token = generateToken(client.client_id, client.username, 'client');
-        res.json({ message: "Client login successful", token });
-    } else {
-        res.status(401).json({ message: "Invalid client credentials" });
+
+        // --- HASH DEBUGGING LOGS ---
+        console.log(`[AUTH-DEBUG] HASH FROM DB:   ${client.password_hash}`);
+        const newHashForDebug = await bcrypt.hash(password, 10); // Use 10 rounds, matching the seed script
+        console.log(`[AUTH-DEBUG] HASH FROM REQ:  ${newHashForDebug}`);
+        // --- END DEBUGGING ---
+
+        const isMatch = await bcrypt.compare(password, client.password_hash);
+
+        if (isMatch) {
+            const token = generateToken(client.client_id, client.username, 'client');
+            res.json({ message: "Client login successful", token });
+        } else {
+            res.status(401).json({ message: "Invalid client credentials" });
+        }
+    } catch (error) {
+        console.error('[AUTH-CRITICAL] Error during client login process:', error);
+        res.status(500).json({ message: "Server error during login" });
     }
 });
 
 module.exports = router;
-

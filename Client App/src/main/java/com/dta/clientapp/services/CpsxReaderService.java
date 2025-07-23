@@ -74,7 +74,8 @@ public class CpsxReaderService {
         }
 
         System.out.println("Successfully decrypted and opened capsule at: " + tempDir);
-        return new OpenedCapsule(cpsxFile.getName(), tempDir, expiresAt);
+        // **FIX:** Convert the Path object `tempDir` to a File object before passing it.
+        return new OpenedCapsule(cpsxFile.getName(), tempDir.toFile(), expiresAt);
     }
 
     private byte[] hexToBytes(String hex) {
