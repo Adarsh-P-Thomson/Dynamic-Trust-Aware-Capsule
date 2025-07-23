@@ -49,16 +49,10 @@ public class CapsuleService {
         payload.put("file_hash_sha256", fileHash);
         payload.put("encrypted_key", encryptedKey);
         if (expiresAt != null) {
-            // **FIX:** Use a custom formatter to produce the exact format PostgreSQL requires.
-            // The 'XXX' pattern creates the offset with a colon (e.g., +05:30), which is standard.
-            // This avoids including the non-standard Java-specific zone ID like '[Asia/Calcutta]'.
             DateTimeFormatter postgresFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            String formattedTimestamp = expiresAt.format(postgresFormatter);
-            payload.put("expires_at", formattedTimestamp);
+            payload.put("expires_at", expiresAt.format(postgresFormatter));
         }
-        // A default policy can be added here if needed
         payload.set("policy", objectMapper.createObjectNode());
-
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_BASE_URL + "/capsules"))
@@ -71,6 +65,38 @@ public class CapsuleService {
 
         if (response.statusCode() != 201) {
             throw new IOException("Failed to create capsule: " + response.statusCode() + " " + response.body());
+        }
+    }
+    
+    public void grantAccess(String token, String capsuleId, String clientEmail) throws IOException, InterruptedException {
+        ObjectNode payload = objectMapper.createObjectNode();
+        payload.put("clientEmail", clientEmail);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/capsules/" + capsuleId + "/grant"))
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IOException("Failed to grant access: " + response.body());
+        }
+    }
+
+    public void initiateDelete(String token, String capsuleId) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/capsules/" + capsuleId + "/initiate-delete"))
+                .header("Authorization", "Bearer " + token)
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IOException("Failed to initiate delete: " + response.body());
         }
     }
 }

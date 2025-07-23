@@ -17,9 +17,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -27,19 +25,17 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 public class DashboardController {
 
-    @FXML
-    private TableView<Capsule> capsuleTable;
-    @FXML
-    private TableColumn<Capsule, String> nameColumn;
-    @FXML
-    private TableColumn<Capsule, String> statusColumn;
-    @FXML
-    private TableColumn<Capsule, String> lifecycleColumn;
-    @FXML
-    private TableColumn<Capsule, String> createdColumn;
+    @FXML private TableView<Capsule> capsuleTable;
+    @FXML private TableColumn<Capsule, String> nameColumn;
+    @FXML private TableColumn<Capsule, String> statusColumn;
+    @FXML private TableColumn<Capsule, String> lifecycleColumn;
+    @FXML private TableColumn<Capsule, String> createdColumn;
+    @FXML private Button grantAccessButton;
+    @FXML private Button deleteButton;
 
     private String authToken;
     private SceneManager sceneManager;
@@ -51,7 +47,21 @@ public class DashboardController {
         this.sceneManager = manager;
 
         setupTableColumns();
+        setupSelectionListener();
         loadCapsules();
+    }
+    
+    private void setupSelectionListener() {
+        // Disable buttons initially
+        grantAccessButton.setDisable(true);
+        deleteButton.setDisable(true);
+
+        // Add a listener to the table's selection model
+        capsuleTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            boolean isItemSelected = (newSelection != null);
+            grantAccessButton.setDisable(!isItemSelected);
+            deleteButton.setDisable(!isItemSelected);
+        });
     }
 
     private void setupTableColumns() {
@@ -100,7 +110,6 @@ public class DashboardController {
 
             dialogStage.showAndWait();
 
-            // Refresh the table if a capsule was created
             if (controller.isCapsuleCreated()) {
                 loadCapsules();
             }
@@ -111,8 +120,62 @@ public class DashboardController {
         }
     }
 
+    @FXML
+    private void handleGrantAccessButton() {
+        Capsule selectedCapsule = capsuleTable.getSelectionModel().getSelectedItem();
+        if (selectedCapsule == null) return;
+
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Grant Access");
+        dialog.setHeaderText("Grant access to capsule: " + selectedCapsule.capsuleNameProperty().get());
+        dialog.setContentText("Enter client's email address:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(email -> {
+            new Thread(() -> {
+                try {
+                    capsuleService.grantAccess(authToken, selectedCapsule.getCapsuleId(), email);
+                    Platform.runLater(() -> showAlert("Success", "Access granted to " + email));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> showAlert("Error", "Failed to grant access: " + e.getMessage()));
+                }
+            }).start();
+        });
+    }
+
+    @FXML
+    private void handleInitiateDeleteButton() {
+        Capsule selectedCapsule = capsuleTable.getSelectionModel().getSelectedItem();
+        if (selectedCapsule == null) return;
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Confirm Deletion");
+        confirmation.setHeaderText("Initiate deletion for: " + selectedCapsule.capsuleNameProperty().get());
+        confirmation.setContentText("This will mark the capsule for deletion and set its expiry to 1 minute from now. Are you sure?");
+
+        Optional<ButtonType> result = confirmation.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            new Thread(() -> {
+                try {
+                    capsuleService.initiateDelete(authToken, selectedCapsule.getCapsuleId());
+                    Platform.runLater(() -> {
+                        showAlert("Success", "Capsule marked for deletion.");
+                        loadCapsules(); // Refresh to show updated status
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Platform.runLater(() -> showAlert("Error", "Failed to initiate delete: " + e.getMessage()));
+                }
+            }).start();
+        }
+    }
+
     private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        if (title.equalsIgnoreCase("error")) {
+            alert.setAlertType(Alert.AlertType.ERROR);
+        }
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
