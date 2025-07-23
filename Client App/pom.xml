@@ -1,13 +1,10 @@
-<!-- ======================================================================= -->
-<!-- File: pom.xml (Maven Project Configuration)                             -->
-<!-- ======================================================================= -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.dta</groupId>
-    <artifactId>admin-app</artifactId>
+    <artifactId>client-app</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -30,19 +27,7 @@
             <version>17.0.2</version>
         </dependency>
 
-        <!-- JSON Parsing Library (for API responses) -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.13.3</version>
-        </dependency>
-
-        <!-- Bouncy Castle for Cryptography (will be needed for CPSX creation) -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.70</version>
-        </dependency>
+        <!-- JSON Parsing Library -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -54,6 +39,12 @@
             <version>2.17.1</version>
         </dependency>
 
+        <!-- Bouncy Castle for Cryptography -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -73,10 +64,9 @@
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.dta.adminapp.MainApp</mainClass>
+                            <mainClass>com.dta.clientapp.MainApp</mainClass>
                         </configuration>
                     </execution>
                 </executions>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="[http://javafx.com/javafx/17](http://javafx.com/javafx/17)" xmlns:fx="[http://javafx.com/fxml/1](http://javafx.com/fxml/1)"
+            fx:controller="com.dta.clientapp.controllers.DashboardController" style="-fx-background-color: #ffffff;">
+    <top>
+        <VBox alignment="CENTER" spacing="10" style="-fx-padding: 20;">
+            <Label text="DTA Capsule Client" textFill="#333333">
+                <font><Font name="System Bold" size="28.0"/></font>
+            </Label>
+            <Button onAction="#handleOpenCapsule" text="Open Capsule File..."
+                    style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;"/>
+        </VBox>
+    </top>
+    <center>
+        <VBox spacing="10" style="-fx-padding: 0 20 20 20;">
+            <Label text="Active Sessions:">
+                <font><Font name="System Bold" size="16.0"/></font>
+            </Label>
+            <ListView fx:id="openedCapsulesListView" prefHeight="300.0"/>
+        </VBox>
+    </center>
+</BorderPane>
