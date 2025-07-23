@@ -99,4 +99,18 @@ public class CapsuleService {
             throw new IOException("Failed to initiate delete: " + response.body());
         }
     }
+
+    public void toggleLockStatus(String token, String capsuleId) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(API_BASE_URL + "/capsules/" + capsuleId + "/toggle-lock"))
+                .header("Authorization", "Bearer " + token)
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new IOException("Failed to toggle lock status: " + response.body());
+        }
+    }
 }

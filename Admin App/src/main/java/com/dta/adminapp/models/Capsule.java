@@ -30,6 +30,9 @@ public class Capsule {
     public ObjectProperty<ZonedDateTime> createdAtProperty() { return createdAt; }
     public ObjectProperty<ZonedDateTime> expiresAtProperty() { return expiresAt; }
 
+    // **FIX:** Added standard getter for the capsule ID string.
+    public String getCapsuleId() { return capsuleId.get(); }
+
     // Setters that will be used by Jackson for JSON deserialization
     @JsonProperty("capsule_id")
     public void setCapsuleId(String id) { this.capsuleId.set(id); }

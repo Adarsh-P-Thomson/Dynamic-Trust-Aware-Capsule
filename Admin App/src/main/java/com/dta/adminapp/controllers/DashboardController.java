@@ -36,6 +36,7 @@ public class DashboardController {
     @FXML private TableColumn<Capsule, String> createdColumn;
     @FXML private Button grantAccessButton;
     @FXML private Button deleteButton;
+    @FXML private Button toggleLockButton;
 
     private String authToken;
     private SceneManager sceneManager;
@@ -55,12 +56,14 @@ public class DashboardController {
         // Disable buttons initially
         grantAccessButton.setDisable(true);
         deleteButton.setDisable(true);
+        toggleLockButton.setDisable(true);
 
         // Add a listener to the table's selection model
         capsuleTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             boolean isItemSelected = (newSelection != null);
             grantAccessButton.setDisable(!isItemSelected);
             deleteButton.setDisable(!isItemSelected);
+            toggleLockButton.setDisable(!isItemSelected);
         });
     }
 
@@ -169,6 +172,25 @@ public class DashboardController {
                 }
             }).start();
         }
+    }
+
+    @FXML
+    private void handleToggleLockButton() {
+        Capsule selectedCapsule = capsuleTable.getSelectionModel().getSelectedItem();
+        if (selectedCapsule == null) return;
+
+        new Thread(() -> {
+            try {
+                capsuleService.toggleLockStatus(authToken, selectedCapsule.getCapsuleId());
+                Platform.runLater(() -> {
+                    showAlert("Success", "Lock status toggled.");
+                    loadCapsules(); // Refresh to show updated status
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> showAlert("Error", "Failed to toggle lock status: " + e.getMessage()));
+            }
+        }).start();
     }
 
     private void showAlert(String title, String content) {

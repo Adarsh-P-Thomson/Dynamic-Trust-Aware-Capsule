@@ -1,22 +1,23 @@
 /*
 ================================================================================
 File: src/main/java/com/dta/clientapp/controllers/DashboardController.java
-Description: Controller for the client dashboard.
+Description: Controller for the client dashboard. (UPDATED)
 ================================================================================
 */
 package com.dta.clientapp.controllers;
 
 import com.dta.clientapp.models.OpenedCapsule;
+import com.dta.clientapp.services.CapsuleService;
 import com.dta.clientapp.services.CpsxReaderService;
 import com.dta.clientapp.services.SceneManager;
 import com.dta.clientapp.services.SessionService;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
 
 public class DashboardController {
 
@@ -26,15 +27,14 @@ public class DashboardController {
     private SceneManager sceneManager;
     private final CpsxReaderService readerService = new CpsxReaderService();
     private final SessionService sessionService = SessionService.getInstance();
+    private final CapsuleService capsuleService = new CapsuleService();
 
     public void initialize(String token, SceneManager manager) {
         this.authToken = token;
         this.sceneManager = manager;
 
-        // Bind the list view to the session service's list
         openedCapsulesListView.setItems(sessionService.getOpenedCapsules());
 
-        // Customize how each item in the list is displayed
         openedCapsulesListView.setCellFactory(param -> new ListCell<>() {
             @Override
             protected void updateItem(OpenedCapsule item, boolean empty) {
@@ -56,22 +56,36 @@ public class DashboardController {
         File selectedFile = fileChooser.showOpenDialog(openedCapsulesListView.getScene().getWindow());
 
         if (selectedFile != null) {
-            // For this demo, we need to ask the user for the decryption key.
-            TextInputDialog keyDialog = new TextInputDialog();
-            keyDialog.setTitle("Decryption Key Required");
-            keyDialog.setHeaderText("Enter the hex-encoded AES key for this capsule.");
-            keyDialog.setContentText("Key:");
+            TextInputDialog idDialog = new TextInputDialog();
+            idDialog.setTitle("Capsule ID Required");
+            idDialog.setHeaderText("Enter the Capsule ID to request the decryption key.");
+            idDialog.setContentText("Capsule ID:");
 
-            keyDialog.showAndWait().ifPresent(hexKey -> {
-                try {
-                    OpenedCapsule capsule = readerService.decryptAndOpen(selectedFile, hexKey);
-                    sessionService.addOpenedCapsule(capsule);
-                    // Open the temporary folder for the user
-                    Desktop.getDesktop().open(capsule.getTempDirectory());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    showAlert("Decryption Failed", "Could not open capsule. Check the key and file integrity.");
-                }
+            idDialog.showAndWait().ifPresent(capsuleId -> {
+                new Thread(() -> {
+                    try {
+                        // 1. Fetch the key from the server
+                        String hexKey = capsuleService.fetchDecryptionKey(authToken, capsuleId)
+                            .orElseThrow(() -> new SecurityException("Access denied or capsule not found."));
+
+                        // 2. Decrypt and open the file
+                        OpenedCapsule capsule = readerService.decryptAndOpen(selectedFile, hexKey);
+                        sessionService.addOpenedCapsule(capsule);
+                        
+                        // 3. Open the temporary folder for the user
+                        Platform.runLater(() -> {
+                            try {
+                                Desktop.getDesktop().open(capsule.getTempDirectory());
+                            } catch (Exception e) {
+                                showAlert("Error", "Could not open the temporary directory.");
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Platform.runLater(() -> showAlert("Decryption Failed", "Could not open capsule. " + e.getMessage()));
+                    }
+                }).start();
             });
         }
     }
